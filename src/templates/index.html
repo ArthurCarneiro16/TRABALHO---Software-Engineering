@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TechFlow Tasks</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    form { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+    input { flex: 1; padding: .5rem; }
+    button { padding: .5rem .9rem; cursor: pointer; }
+    .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .col { background: #f3f4f6; border-radius: 8px; padding: .75rem; min-height: 150px; }
+    .card { background: #fff; border-radius: 6px; padding: .6rem; margin-top: .5rem; }
+    .card small { display: block; margin-top: .4rem; }
+    .erro { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>TechFlow Tasks</h1>
+  <form id="form">
+    <input id="titulo" placeholder="Nova tarefa" maxlength="100">
+    <button type="submit">Adicionar</button>
+  </form>
+  <p id="erro" class="erro"></p>
+  <div class="board">
+    <div class="col"><h3>A Fazer</h3><div id="todo"></div></div>
+    <div class="col"><h3>Em Progresso</h3><div id="in_progress"></div></div>
+    <div class="col"><h3>Concluído</h3><div id="done"></div></div>
+  </div>
+
+  <script>
+    const ordem = ["todo", "in_progress", "done"];
+
+    async function carregar() {
+      const tarefas = await (await fetch("/api/tasks")).json();
+      ordem.forEach(s => document.getElementById(s).innerHTML = "");
+      tarefas.forEach(t => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const idx = ordem.indexOf(t.status);
+        card.innerHTML = `<strong></strong><small></small>`;
+        card.querySelector("strong").textContent = t.title;
+        const acoes = card.querySelector("small");
+        if (idx > 0) acoes.append(botao("←", () => mover(t, ordem[idx - 1])));
+        if (idx < 2) acoes.append(botao("→", () => mover(t, ordem[idx + 1])));
+        acoes.append(botao("🗑", () => remover(t)));
+        document.getElementById(t.status).append(card);
+      });
+    }
+
+    function botao(texto, fn) {
+      const b = document.createElement("button");
+      b.textContent = texto;
+      b.onclick = fn;
+      return b;
+    }
+
+    async function mover(t, status) {
+      await fetch(`/api/tasks/${t.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      carregar();
+    }
+
+    async function remover(t) {
+      await fetch(`/api/tasks/${t.id}`, { method: "DELETE" });
+      carregar();
+    }
+
+    document.getElementById("form").onsubmit = async e => {
+      e.preventDefault();
+      const titulo = document.getElementById("titulo");
+      const r = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: titulo.value })
+      });
+      document.getElementById("erro").textContent =
+        r.ok ? "" : (await r.json()).errors.join(", ");
+      if (r.ok) titulo.value = "";
+      carregar();
+    };
+
+    carregar();
+  </script>
+</body>
+</html>
