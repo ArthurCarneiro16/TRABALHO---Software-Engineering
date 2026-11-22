@@ -42,4 +42,15 @@ docs/        diagramas UML e prints
 ```
 
 ## Gestão de mudanças
-_(preencher na etapa de mudança de escopo: o que mudou, por quê e qual card foi criado)_
+**Mudança solicitada:** a TechFlow pediu que as tarefas críticas pudessem ser
+priorizadas (Alta, Média ou Baixa) para a equipe saber o que atacar primeiro.
+
+**Como foi tratada:** foi criado o card *"Adicionar campo de prioridade nas tarefas"*
+no Kanban, que passou por To Do → In Progress → Done, com commits separados
+(`feat:`, `test:`, `docs:`).
+
+**Impacto no sistema:**
+- Banco: nova coluna `priority` (padrão `media`), com migração automática para bancos antigos.
+- API: validação do campo e listagem ordenada por prioridade.
+- Interface: seletor de prioridade e etiqueta colorida em cada card.
+- Testes: 6 novos testes (padrão, valor inválido, atualização, ordenação e migração).
