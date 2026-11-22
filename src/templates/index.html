@@ -14,12 +14,23 @@
     .card { background: #fff; border-radius: 6px; padding: .6rem; margin-top: .5rem; }
     .card small { display: block; margin-top: .4rem; }
     .erro { color: #b91c1c; }
+    select { padding: .5rem; }
+    .tag { display: inline-block; font-size: .7rem; padding: .1rem .45rem;
+           border-radius: 999px; color: #fff; margin-left: .4rem; }
+    .tag.alta { background: #dc2626; }
+    .tag.media { background: #d97706; }
+    .tag.baixa { background: #16a34a; }
   </style>
 </head>
 <body>
   <h1>TechFlow Tasks</h1>
   <form id="form">
     <input id="titulo" placeholder="Nova tarefa" maxlength="100">
+    <select id="prioridade">
+      <option value="alta">Alta</option>
+      <option value="media" selected>Média</option>
+      <option value="baixa">Baixa</option>
+    </select>
     <button type="submit">Adicionar</button>
   </form>
   <p id="erro" class="erro"></p>
@@ -31,6 +42,7 @@
 
   <script>
     const ordem = ["todo", "in_progress", "done"];
+    const rotulos = { alta: "Alta", media: "Média", baixa: "Baixa" };
 
     async function carregar() {
       const tarefas = await (await fetch("/api/tasks")).json();
@@ -39,8 +51,11 @@
         const card = document.createElement("div");
         card.className = "card";
         const idx = ordem.indexOf(t.status);
-        card.innerHTML = `<strong></strong><small></small>`;
+        card.innerHTML = `<strong></strong><span class="tag"></span><small></small>`;
         card.querySelector("strong").textContent = t.title;
+        const tag = card.querySelector(".tag");
+        tag.classList.add(t.priority);
+        tag.textContent = rotulos[t.priority];
         const acoes = card.querySelector("small");
         if (idx > 0) acoes.append(botao("←", () => mover(t, ordem[idx - 1])));
         if (idx < 2) acoes.append(botao("→", () => mover(t, ordem[idx + 1])));
@@ -76,7 +91,10 @@
       const r = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: titulo.value })
+        body: JSON.stringify({
+          title: titulo.value,
+          priority: document.getElementById("prioridade").value
+        })
       });
       document.getElementById("erro").textContent =
         r.ok ? "" : (await r.json()).errors.join(", ");
